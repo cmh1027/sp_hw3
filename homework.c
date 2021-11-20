@@ -14,22 +14,26 @@
  
  
 //function define
-int rootkit_init(void);
-void rootkit_exit(void);
+int firewall_init(void);
+void firewall_exit(void);
 unsigned int sniff(void *priv, struct sk_buff *skb, const struct nf_hook_state *state);
+unsigned int drop(void *priv, struct sk_buff *skb, const struct nf_hook_state *state);
  
-//nf_hook_ops
+struct nf_hook_ops net_hook_sniff;
+struct nf_hook_ops net_hook_drop;
  
-struct nf_hook_ops net_hook;
- 
-int rootkit_init(void) {
-   printk("Network Sniffing\n");
+int firewall_init(void) {
    //setting pre_hook;
-   net_hook.hooknum =  NF_INET_PRE_ROUTING;
-   net_hook.priority = NF_IP_PRI_FIRST;
-   net_hook.pf = PF_INET;
-   net_hook.hook = &sniff;
-   nf_register_hook(&net_hook);
+   net_hook_sniff.hooknum =  NF_INET_PRE_ROUTING;
+   net_hook_sniff.priority = NF_IP_PRI_FIRST;
+   net_hook_sniff.pf = PF_INET;
+   net_hook_sniff.hook = &sniff;
+   nf_register_hook(&net_hook_sniff);
+   net_hook_sniff.hooknum =  NF_INET_LOCAL_IN;
+   net_hook_sniff.priority = NF_IP_PRI_FIRST;
+   net_hook_sniff.pf = PF_INET;
+   net_hook_sniff.hook = &drop;
+   nf_register_hook(&net_hook_sniff);
    return 1;
 }
  
@@ -48,6 +52,8 @@ unsigned int sniff(void *priv, struct sk_buff *skb, const struct nf_hook_state *
    dest_port = (unsigned int)ntohs(tcp_header->dest);
    if(src_port == 1111)
       strcpy(if_forward, "forward: FORWARD packet ");
+   if(src_port == 2222)
+      strcpy(if_forward, "drop: FORWARD packet ");
    else if(src_port == 7777)
       strcpy(if_forward, "forward: POST_ROUTING packet ");
    printk("%s(%d;%d;%d;%d;%d)", if_forward, protocol, src_port, dest_port, src_ip, dest_ip);
@@ -55,12 +61,40 @@ unsigned int sniff(void *priv, struct sk_buff *skb, const struct nf_hook_state *
       tcp_header->source = 7777;
       tcp_header->dest = 7777;
    }
+   if(src_port == 2222){ // drop packet
+      tcp_header->source = 3333;
+      tcp_header->dest = 3333;
+   }
    return NF_ACCEPT;
+}
+
+unsigned int drop(void *priv, struct sk_buff *skb, const struct nf_hook_state *state){
+   struct tcphdr *tcp_header;
+   struct iphdr *ip_header = (struct iphdr*)skb_network_header(skb);
+   u_int8_t protocol = ip_header->protocol;
+   char if_forward[50] = {0,};
+   unsigned int src_port = 0;
+   unsigned int dest_port = 0;
+   unsigned int src_ip = (unsigned int)ip_header->saddr;
+   unsigned int dest_ip = (unsigned int)ip_header->daddr;
+   tcp_header = (struct tcphdr *)skb_transport_header(skb);
+   src_port = (unsigned int)ntohs(tcp_header->source);
+   dest_port = (unsigned int)ntohs(tcp_header->dest);
+   if(src_port == 7777){
+      strcpy(if_forward, "forward: POST_ROUTING packet ");
+      printk("%s(%d;%d;%d;%d;%d)", if_forward, protocol, src_port, dest_port, src_ip, dest_ip);
+   }
+   if(src_port == 3333){ // undesirable
+      printk(KERN_WARNING, "%s(%d;%d;%d;%d;%d)", if_forward, protocol, src_port, dest_port, src_ip, dest_ip);
+      strcpy(if_forward, "drop: POST_ROUTING packet ");
+   }
+   
 }
  
 
-void rootkit_exit(void) {
-   nf_unregister_hook(&net_hook);
+void firewall_exit(void) {
+   nf_unregister_hook(&net_hook_sniff);
+   nf_unregister_hook(&net_hook_drop);
 }
  
  
@@ -68,5 +102,5 @@ void rootkit_exit(void) {
 MODULE_DESCRIPTION ("netfilter rootkit");
 MODULE_LICENSE("GPL");
 
-module_init(rootkit_init);
-module_exit(rootkit_exit);
+module_init(firewall_init);
+module_exit(firewall_exit);
