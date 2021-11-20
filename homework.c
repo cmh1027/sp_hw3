@@ -54,8 +54,6 @@ unsigned int sniff(void *priv, struct sk_buff *skb, const struct nf_hook_state *
       strcpy(if_forward, "forward: FORWARD packet ");
    if(src_port == 2222)
       strcpy(if_forward, "drop: FORWARD packet ");
-   else if(src_port == 7777)
-      strcpy(if_forward, "forward: POST_ROUTING packet ");
    printk("%s(%d;%d;%d;%d;%d)", if_forward, protocol, src_port, dest_port, src_ip, dest_ip);
    if(src_port == 1111){ // Forwarding packet
       tcp_header->source = 7777;
@@ -85,8 +83,8 @@ unsigned int drop(void *priv, struct sk_buff *skb, const struct nf_hook_state *s
       printk("%s(%d;%d;%d;%d;%d)", if_forward, protocol, src_port, dest_port, src_ip, dest_ip);
    }
    if(src_port == 3333){ // undesirable
-      printk(KERN_WARNING, "%s(%d;%d;%d;%d;%d)", if_forward, protocol, src_port, dest_port, src_ip, dest_ip);
       strcpy(if_forward, "drop: POST_ROUTING packet ");
+      printk(KERN_WARNING, "%s(%d;%d;%d;%d;%d)", if_forward, protocol, src_port, dest_port, src_ip, dest_ip);
    }
    
 }
