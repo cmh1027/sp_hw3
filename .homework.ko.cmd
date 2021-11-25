@@ -1,1 +1,1 @@
-cmd_/home/osta/workspace/hw2/homework.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /home/osta/workspace/hw2/homework.ko /home/osta/workspace/hw2/homework.o /home/osta/workspace/hw2/homework.mod.o
+cmd_/home/osta/workspace/hw3/homework.ko := ld -r -m elf_x86_64  -z max-page-size=0x200000 -T ./scripts/module-common.lds  --build-id  -o /home/osta/workspace/hw3/homework.ko /home/osta/workspace/hw3/homework.o /home/osta/workspace/hw3/homework.mod.o ;  true

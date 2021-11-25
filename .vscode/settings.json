@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "inet.h": "c"
+        "inet.h": "c",
+        "netfilter.h": "c",
+        "netfilter_ipv4.h": "c",
+        "sysctl.h": "c"
     }
 }

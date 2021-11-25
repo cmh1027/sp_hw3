@@ -1,2 +1,3 @@
-/home/osta/workspace/hw2/homework.ko
-/home/osta/workspace/hw2/homework.o
+/home/osta/workspace/hw3/homework.ko
+/home/osta/workspace/hw3/homework.o
+
